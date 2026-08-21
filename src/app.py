@@ -141,6 +141,12 @@ if st.button("Generate Sales Insights", type="primary"):
             st.header("Sales Account One-Pager")
             st.markdown(final_report)
 
+            st.download_button(
+                label="📥 Download One-Pager",
+                data=final_report,
+                file_name="sales_account_one_pager.md",
+                mime="text/markdown",
+            )
         except Exception as e:
             st.error(f"Error: {e}")
             

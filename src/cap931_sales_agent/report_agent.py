@@ -28,68 +28,79 @@ def generate_sales_one_pager(
     prompt = f"""
 You are the Final Report Agent in a multi-agent sales intelligence system.
 
-Your task is to combine the outputs from three specialized research agents
-into a concise, professional, one-page sales intelligence brief.
+Create a polished, executive-level ONE-PAGE sales account brief.
 
-PRODUCT:
+PRODUCT
 Product Name: {product_name}
 Product Category: {product_category}
 Value Proposition: {value_proposition}
 
-PROSPECT:
+PROSPECT
 Company URL: {company_url}
 Target Customer: {target_customer}
 
-COMPANY RESEARCH:
+PRODUCT DOCUMENT
+{product_document_text if product_document_text else "No product document provided."}
+
+COMPANY RESEARCH
 {company_research}
 
-COMPETITOR RESEARCH:
+COMPETITOR RESEARCH
 {competitor_research}
 
-LEADERSHIP RESEARCH:
+LEADERSHIP RESEARCH
 {leadership_research}
 
-PRODUCT OVERVIEW DOCUMENT:
-{product_document_text if product_document_text else "No product document was provided."}
-
-Create a one-page sales brief with these sections:
+FORMAT THE REPORT EXACTLY LIKE THIS:
 
 # Sales Account Brief
 
-## Prospect Overview
-Summarize the company and the relevance of this sales opportunity.
+## Executive Snapshot
+Provide 3–4 concise sentences summarizing:
+- the prospect's strategic direction,
+- the main sales opportunity,
+- the most important competitive consideration.
 
 ## Company Strategy
-Summarize the most important business and technology priorities relevant
-to the product.
+Use 3–5 concise bullet points describing the most relevant company priorities.
 
-## Competitor Landscape
-Summarize relevant competitors, relationships, risks, and opportunities.
+## Competitive Landscape
+Use a short table:
 
-## Leadership Information
-Identify the most relevant leaders and explain their importance to the
-sales opportunity.
+| Competitor | Relevance | Sales Implication |
+|---|---|---|
+
+Include only competitors supported by the research.
+
+## Key Decision Makers
+Use a short table:
+
+| Leader / Role | Relevance to Opportunity |
+|---|---|
+
+Do not invent names or titles.
 
 ## Product Fit
-Explain how the product and value proposition align with the prospect's
-needs and strategy.
+Provide 3 concise bullets explaining how the product aligns with the prospect's needs.
 
 ## Recommended Sales Approach
-Provide 3 to 5 practical talking points or next steps for the sales rep.
+Provide exactly 4 practical next steps for the sales representative.
 
 ## Key Risks
-Identify important risks, objections, or uncertainties.
+Provide 2–4 concise risks or objections.
 
 ## Sources
-Preserve the most useful source links from the research agents.
+List the most important source links used by the research agents.
 
-Rules:
-- Use only information supplied by the research agents.
-- Do not invent company facts, executives, partnerships, or competitor relationships.
-- Clearly distinguish factual findings from sales recommendations.
-- Remove unnecessary repetition.
-- Keep the output concise enough to function as a one-page executive brief.
-- Make the output useful for a sales representative preparing for a meeting.
+RULES:
+- Keep the report concise and presentation-ready.
+- Use professional business language.
+- Avoid long paragraphs.
+- Avoid repetition.
+- Separate verified facts from recommendations.
+- Do not invent facts, executives, partnerships, or competitor relationships.
+- Preserve useful source links.
+- The result should fit approximately one printed page.
 """
 
     response = client.responses.create(
