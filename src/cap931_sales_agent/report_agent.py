@@ -1,111 +1,367 @@
-import os
-from pathlib import Path
+"""
+CAP 931 - Sales Agent Prototype
+Final Sales Report Agent V2
 
-from dotenv import load_dotenv
-from openai import OpenAI
-
-
-PROJECT_ROOT = Path(__file__).resolve().parents[2]
-ENV_FILE = PROJECT_ROOT / ".env"
-
-load_dotenv(dotenv_path=ENV_FILE)
-
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-
-
-def generate_sales_one_pager(
-    product_name: str,
-    product_category: str,
-    value_proposition: str,
-    target_customer: str,
-    company_url: str,
-    company_research: str,
-    competitor_research: str,
-    leadership_research: str,
-    product_document_text: str = "",
-) -> str:
-
-    prompt = f"""
-You are the Final Report Agent in a multi-agent sales intelligence system.
-
-Create a polished, executive-level ONE-PAGE sales account brief.
-
-PRODUCT
-Product Name: {product_name}
-Product Category: {product_category}
-Value Proposition: {value_proposition}
-
-PROSPECT
-Company URL: {company_url}
-Target Customer: {target_customer}
-
-PRODUCT DOCUMENT
-{product_document_text if product_document_text else "No product document provided."}
-
-COMPANY RESEARCH
-{company_research}
-
-COMPETITOR RESEARCH
-{competitor_research}
-
-LEADERSHIP RESEARCH
-{leadership_research}
-
-FORMAT THE REPORT EXACTLY LIKE THIS:
-
-# Sales Account Brief
-
-## Executive Snapshot
-Provide 3–4 concise sentences summarizing:
-- the prospect's strategic direction,
-- the main sales opportunity,
-- the most important competitive consideration.
-
-## Company Strategy
-Use 3–5 concise bullet points describing the most relevant company priorities.
-
-## Competitive Landscape
-Use a short table:
-
-| Competitor | Relevance | Sales Implication |
-|---|---|---|
-
-Include only competitors supported by the research.
-
-## Key Decision Makers
-Use a short table:
-
-| Leader / Role | Relevance to Opportunity |
-|---|---|
-
-Do not invent names or titles.
-
-## Product Fit
-Provide 3 concise bullets explaining how the product aligns with the prospect's needs.
-
-## Recommended Sales Approach
-Provide exactly 4 practical next steps for the sales representative.
-
-## Key Risks
-Provide 2–4 concise risks or objections.
-
-## Sources
-List the most important source links used by the research agents.
-
-RULES:
-- Keep the report concise and presentation-ready.
-- Use professional business language.
-- Avoid long paragraphs.
-- Avoid repetition.
-- Separate verified facts from recommendations.
-- Do not invent facts, executives, partnerships, or competitor relationships.
-- Preserve useful source links.
-- The result should fit approximately one printed page.
+Combines specialized agent outputs into a concise,
+evidence-grounded one-page sales intelligence brief.
 """
 
-    response = client.responses.create(
-        model="gpt-5-mini",
-        input=prompt,
+from __future__ import annotations
+
+import json
+
+from openai import OpenAI
+
+from cap931_sales_agent.config import (
+    MAX_OUTPUT_TOKENS,
+    OPENAI_API_KEY,
+    OPENAI_MODEL,
+    TEMPERATURE,
+)
+from cap931_sales_agent.schemas import (
+    CompanyStrategyInsight,
+    CompetitorInsight,
+    LeadershipInsight,
+    SalesAgentInput,
+    SalesBrief,
+)
+
+
+# ============================================================
+# OPENAI CLIENT
+# ============================================================
+
+client = OpenAI(
+    api_key=OPENAI_API_KEY
+)
+
+
+# ============================================================
+# SYSTEM PROMPT
+# ============================================================
+
+SYSTEM_PROMPT = """
+You are the Final Sales Brief Agent in a multi-agent
+sales intelligence system.
+
+Your job is to synthesize the verified findings from the
+Company Strategy Agent, Competitor Analysis Agent, and
+Leadership Research Agent into a concise one-page brief.
+
+The final brief must contain:
+
+1. Account Overview
+2. Company Strategy
+3. Competitor Insights
+4. Leadership Information
+5. Product Fit
+6. Recommended Sales Approach
+7. Risks / Information Gaps
+8. Article / Source Links
+
+IMPORTANT RULES:
+
+- Use only the supplied agent findings and verified source URLs.
+- Do not invent facts.
+- Do not create new executives, competitor relationships,
+  technologies, initiatives, partnerships, budgets, timelines,
+  purchase intent, or quotes.
+- Do not label a company a verified competitor unless the
+  specialized competitor analysis directly supports that.
+- Distinguish competitive overlap from a verified competitive relationship.
+- Do not turn a potential buying signal into confirmed demand.
+- If leadership evidence is unavailable, state that clearly.
+- Clearly distinguish evidence from inference.
+- Recommendations should be practical next steps for a sales rep.
+- Keep the output concise enough to function as a one-page brief.
+- Return valid JSON only.
+"""
+
+
+# ============================================================
+# BUILD REPORT PROMPT
+# ============================================================
+
+def build_report_prompt(
+    sales_input: SalesAgentInput,
+    company_analysis: CompanyStrategyInsight,
+    competitor_analysis: CompetitorInsight,
+    leadership_analysis: LeadershipInsight,
+    source_urls: list[str],
+) -> str:
+    """
+    Build the evidence-grounded synthesis prompt.
+    """
+
+    company_json = company_analysis.model_dump_json(
+        indent=2
     )
 
-    return response.output_text
+    competitor_json = competitor_analysis.model_dump_json(
+        indent=2
+    )
+
+    leadership_json = leadership_analysis.model_dump_json(
+        indent=2
+    )
+
+    sources_text = (
+        "\n".join(
+            f"- {url}"
+            for url in source_urls
+        )
+        if source_urls
+        else "No verified source URLs available."
+    )
+
+    uploaded_context = (
+        sales_input.uploaded_document_text
+        if sales_input.uploaded_document_text
+        else "No optional product document was supplied."
+    )
+
+    return f"""
+SALES OPPORTUNITY
+
+Product Name:
+{sales_input.product_name}
+
+Product Category:
+{sales_input.product_category}
+
+Value Proposition:
+{sales_input.value_proposition}
+
+Prospect Company:
+{sales_input.company_url}
+
+Target Customer / Role:
+{sales_input.target_customer}
+
+
+OPTIONAL PRODUCT DOCUMENT CONTEXT
+
+{uploaded_context}
+
+
+COMPANY STRATEGY AGENT OUTPUT
+
+{company_json}
+
+
+COMPETITOR ANALYSIS AGENT OUTPUT
+
+{competitor_json}
+
+
+LEADERSHIP RESEARCH AGENT OUTPUT
+
+{leadership_json}
+
+
+VERIFIED SOURCE URLS
+
+{sources_text}
+
+
+TASK
+
+Create one concise JSON sales brief with exactly this structure:
+
+{{
+  "account_overview": "Short account and opportunity summary.",
+  "company_strategy": "Evidence-grounded company strategy summary.",
+  "competitor_insights": "Careful competitive analysis that distinguishes verified evidence from overlap or inference.",
+  "leadership_information": "Verified leadership findings or a clear statement that leadership evidence is insufficient.",
+  "product_fit": "Carefully qualified explanation of how the product may align with verified priorities or gaps.",
+  "recommended_sales_approach": "Practical next-step sales approach grounded in the evidence.",
+  "risks_and_information_gaps": [
+    "Important limitation, uncertainty, or unresolved question"
+  ],
+  "article_links": [
+    "Verified public source URL"
+  ]
+}}
+
+FIELD GUIDANCE
+
+account_overview:
+Summarize the prospect, product, and overall opportunity.
+
+company_strategy:
+Use only the Company Strategy Agent output.
+Do not introduce a strategy that was not already identified.
+
+competitor_insights:
+Use the Competitor Analysis Agent output.
+If there is only competitive overlap, say "competitive overlap".
+Do not upgrade overlap into a verified competitive relationship.
+
+leadership_information:
+Use only verified leadership information.
+If no relevant leaders were verified, say so directly.
+
+product_fit:
+Explain how the product MAY align with verified priorities.
+Do not imply confirmed need, procurement, or demand unless
+the evidence explicitly supports it.
+
+recommended_sales_approach:
+Recommend realistic next steps such as:
+- discovery questions
+- validating decision-makers
+- validating technology gaps
+- verifying procurement timing
+- identifying integration opportunities
+- monitoring public strategic signals
+
+risks_and_information_gaps:
+Combine the most important unresolved questions from all agents.
+
+article_links:
+Use only URLs from the verified source list.
+Do not invent links.
+
+Return JSON only.
+""".strip()
+
+
+# ============================================================
+# RESPONSE PARSER
+# ============================================================
+
+def parse_report_response(
+    raw_output: str,
+) -> SalesBrief:
+    """
+    Parse and validate the Final Sales Brief Agent response.
+    """
+
+    text = raw_output.strip()
+
+    if text.startswith("```json"):
+        text = text[7:]
+
+    elif text.startswith("```"):
+        text = text[3:]
+
+    if text.endswith("```"):
+        text = text[:-3]
+
+    text = text.strip()
+
+    try:
+        data = json.loads(text)
+
+    except json.JSONDecodeError as exc:
+        raise ValueError(
+            "Final Sales Brief Agent returned invalid JSON.\n"
+            f"Raw output:\n{text}"
+        ) from exc
+
+    return SalesBrief.model_validate(
+        data
+    )
+
+
+# ============================================================
+# RUN REPORT AGENT
+# ============================================================
+
+def run_report_agent(
+    sales_input: SalesAgentInput,
+    company_analysis: CompanyStrategyInsight,
+    competitor_analysis: CompetitorInsight,
+    leadership_analysis: LeadershipInsight,
+    source_urls: list[str],
+) -> SalesBrief:
+    """
+    Generate the final one-page sales brief.
+    """
+
+    prompt = build_report_prompt(
+        sales_input=sales_input,
+        company_analysis=company_analysis,
+        competitor_analysis=competitor_analysis,
+        leadership_analysis=leadership_analysis,
+        source_urls=source_urls,
+    )
+
+    response = client.responses.create(
+        model=OPENAI_MODEL,
+        instructions=SYSTEM_PROMPT,
+        input=prompt,
+        max_output_tokens=MAX_OUTPUT_TOKENS,
+        temperature=TEMPERATURE,
+    )
+
+    raw_output = response.output_text
+
+    if not raw_output:
+        raise ValueError(
+            "Final Sales Brief Agent returned an empty response."
+        )
+
+    return parse_report_response(
+        raw_output
+    )
+
+
+# ============================================================
+# FORMAT FOR STREAMLIT
+# ============================================================
+
+def format_sales_brief_markdown(
+    brief: SalesBrief,
+) -> str:
+    """
+    Convert SalesBrief into readable Markdown.
+    """
+
+    if brief.risks_and_information_gaps:
+        gaps = "\n".join(
+            f"- {item}"
+            for item in brief.risks_and_information_gaps
+        )
+    else:
+        gaps = (
+            "- No additional information gaps were reported."
+        )
+
+    if brief.article_links:
+        links = "\n".join(
+            f"- {url}"
+            for url in brief.article_links
+        )
+    else:
+        links = (
+            "- No verified source links available."
+        )
+
+    return f"""
+# Sales Account Intelligence Brief
+
+## Account Overview
+{brief.account_overview}
+
+## Company Strategy
+{brief.company_strategy}
+
+## Competitor Insights
+{brief.competitor_insights}
+
+## Leadership Information
+{brief.leadership_information}
+
+## Product Fit
+{brief.product_fit}
+
+## Recommended Sales Approach
+{brief.recommended_sales_approach}
+
+## Risks / Information Gaps
+{gaps}
+
+## Article / Source Links
+{links}
+""".strip()
