@@ -111,7 +111,8 @@ class ResearchSource(BaseModel):
         default="webpage",
         description=(
             "Type of source such as webpage, press release, "
-            "leadership page, article, job posting, or filing."
+            "leadership page, article, job posting, investor relations, "
+            "annual report, 10-K filing, or other public filing."
         ),
     )
 
@@ -165,9 +166,23 @@ class AgentInsight(BaseModel):
 class CompanyStrategyInsight(BaseModel):
     """
     Output from the Company Strategy Agent.
+
+    Includes evidence-grounded company strategy and,
+    when available, a specific Annual Report / 10-K insight.
     """
 
     company_strategy: str
+
+    annual_report_insight: Optional[str] = Field(
+        default=None,
+        description=(
+            "Evidence-grounded insight derived from a verified "
+            "Annual Report, 10-K filing, investor-relations document, "
+            "or equivalent public company filing. "
+            "If no such evidence is available, this field should "
+            "remain None rather than contain unsupported information."
+        ),
+    )
 
     business_priorities: List[str] = Field(
         default_factory=list
@@ -265,11 +280,22 @@ class LeadershipInsight(BaseModel):
 class SalesBrief(BaseModel):
     """
     Final one-page sales intelligence brief.
+
+    The brief includes a dedicated Annual Report / 10-K section
+    when verified public-company evidence is available.
     """
 
     account_overview: str
 
     company_strategy: str
+
+    annual_report_insight: Optional[str] = Field(
+        default=None,
+        description=(
+            "Verified Annual Report / 10-K insight passed from "
+            "the Company Strategy Agent into the final sales brief."
+        ),
+    )
 
     competitor_insights: str
 

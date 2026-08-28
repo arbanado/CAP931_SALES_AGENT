@@ -1,9 +1,12 @@
 """
 CAP 931 - Sales Agent Prototype
-Final Sales Report Agent V2
+Final Sales Report Agent V3
 
 Combines specialized agent outputs into a concise,
 evidence-grounded one-page sales intelligence brief.
+
+Includes a dedicated Annual Report / 10-K insight when
+verified public-company filing evidence is available.
 """
 
 from __future__ import annotations
@@ -52,12 +55,13 @@ The final brief must contain:
 
 1. Account Overview
 2. Company Strategy
-3. Competitor Insights
-4. Leadership Information
-5. Product Fit
-6. Recommended Sales Approach
-7. Risks / Information Gaps
-8. Article / Source Links
+3. Annual Report / 10-K Insight
+4. Competitor Insights
+5. Leadership Information
+6. Product Fit
+7. Recommended Sales Approach
+8. Risks / Information Gaps
+9. Article / Source Links
 
 IMPORTANT RULES:
 
@@ -65,16 +69,30 @@ IMPORTANT RULES:
 - Do not invent facts.
 - Do not create new executives, competitor relationships,
   technologies, initiatives, partnerships, budgets, timelines,
-  purchase intent, or quotes.
+  purchase intent, financial values, or quotes.
 - Do not label a company a verified competitor unless the
   specialized competitor analysis directly supports that.
-- Distinguish competitive overlap from a verified competitive relationship.
+- Distinguish competitive overlap from a verified competitive
+  relationship.
 - Do not turn a potential buying signal into confirmed demand.
 - If leadership evidence is unavailable, state that clearly.
 - Clearly distinguish evidence from inference.
 - Recommendations should be practical next steps for a sales rep.
 - Keep the output concise enough to function as a one-page brief.
-- Return valid JSON only.
+
+ANNUAL REPORT / 10-K RULES:
+
+- Use the Company Strategy Agent's "annual_report_insight"
+  exactly as evidence context.
+- Do not create a new Annual Report or 10-K claim.
+- Do not add financial figures that were not already present
+  in the Company Strategy Agent output.
+- If "annual_report_insight" is null, return
+  "annual_report_insight": null.
+- Do not substitute generic company strategy information for
+  verified Annual Report / 10-K evidence.
+
+Return valid JSON only.
 """
 
 
@@ -170,57 +188,129 @@ Create one concise JSON sales brief with exactly this structure:
 
 {{
   "account_overview": "Short account and opportunity summary.",
+
   "company_strategy": "Evidence-grounded company strategy summary.",
+
+  "annual_report_insight": "Verified Annual Report / 10-K insight from the Company Strategy Agent, or null if no verified filing evidence is available.",
+
   "competitor_insights": "Careful competitive analysis that distinguishes verified evidence from overlap or inference.",
+
   "leadership_information": "Verified leadership findings or a clear statement that leadership evidence is insufficient.",
+
   "product_fit": "Carefully qualified explanation of how the product may align with verified priorities or gaps.",
+
   "recommended_sales_approach": "Practical next-step sales approach grounded in the evidence.",
+
   "risks_and_information_gaps": [
     "Important limitation, uncertainty, or unresolved question"
   ],
+
   "article_links": [
     "Verified public source URL"
   ]
 }}
 
+
 FIELD GUIDANCE
 
+
 account_overview:
+
 Summarize the prospect, product, and overall opportunity.
 
+
 company_strategy:
+
 Use only the Company Strategy Agent output.
+
 Do not introduce a strategy that was not already identified.
 
+
+annual_report_insight:
+
+Use only:
+
+company_analysis.annual_report_insight
+
+If the Company Strategy Agent returned a verified Annual
+Report / 10-K insight, preserve its meaning and summarize it
+concisely for the sales representative.
+
+Do not:
+
+- invent a filing
+- add unsupported financial values
+- create new percentages
+- create new dates
+- create new investment claims
+- infer a 10-K statement from generic company information
+
+If the Company Strategy Agent returned null, return:
+
+"annual_report_insight": null
+
+
 competitor_insights:
+
 Use the Competitor Analysis Agent output.
-If there is only competitive overlap, say "competitive overlap".
-Do not upgrade overlap into a verified competitive relationship.
+
+If there is only competitive overlap, say
+"competitive overlap".
+
+Do not upgrade overlap into a verified competitive
+relationship.
+
 
 leadership_information:
+
 Use only verified leadership information.
+
 If no relevant leaders were verified, say so directly.
 
+
 product_fit:
+
 Explain how the product MAY align with verified priorities.
+
+The product fit may reference a verified Annual Report / 10-K
+insight when relevant.
+
 Do not imply confirmed need, procurement, or demand unless
 the evidence explicitly supports it.
 
+
 recommended_sales_approach:
+
 Recommend realistic next steps such as:
+
 - discovery questions
 - validating decision-makers
 - validating technology gaps
 - verifying procurement timing
 - identifying integration opportunities
 - monitoring public strategic signals
+- using verified filing insights to frame discovery questions
+
 
 risks_and_information_gaps:
+
 Combine the most important unresolved questions from all agents.
 
+If no verified Annual Report / 10-K insight was available,
+include that limitation when it is relevant to the account
+analysis.
+
+
 article_links:
+
 Use only URLs from the verified source list.
+
 Do not invent links.
+
+When a verified Annual Report / 10-K insight exists, include
+the corresponding source URL if that URL appears in the
+verified source list.
+
 
 Return JSON only.
 """.strip()
@@ -338,6 +428,15 @@ def format_sales_brief_markdown(
             "- No verified source links available."
         )
 
+    annual_report_section = (
+        brief.annual_report_insight
+        if brief.annual_report_insight
+        else (
+            "No verified Annual Report / 10-K insight was "
+            "available from the collected public evidence."
+        )
+    )
+
     return f"""
 # Sales Account Intelligence Brief
 
@@ -346,6 +445,9 @@ def format_sales_brief_markdown(
 
 ## Company Strategy
 {brief.company_strategy}
+
+## Annual Report / 10-K Insight
+{annual_report_section}
 
 ## Competitor Insights
 {brief.competitor_insights}

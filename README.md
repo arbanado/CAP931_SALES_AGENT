@@ -4,7 +4,7 @@
 
 **Learner:** Arbana Doda  
 **Project:** CAP 931  
-**Version:** 1.0  
+**Version:** 1.1  
 **Language:** Python  
 **Interface:** Streamlit  
 **LLM:** OpenAI GPT-4.1-mini  
@@ -20,6 +20,7 @@ The CAP 931 Multi-Agent Sales Assistant is an AI-powered sales intelligence prot
 The application combines public web research with multiple specialized GPT agents to analyze:
 
 - Company strategy
+- Annual Report / 10-K insights
 - Business priorities
 - Technology signals
 - Buying signals
@@ -46,15 +47,16 @@ The project was developed to satisfy the CAP 931 capstone requirements by implem
 4. Public URL research and data extraction
 5. Multi-agent GPT analysis
 6. Company strategy analysis
-7. Competitor analysis
-8. Leadership research
-9. Product-fit analysis
-10. A one-page sales intelligence output
-11. Source validation and information-gap reporting
-12. Prompt engineering and prompt-chaining experimentation
-13. Optional PDF document input
-14. Downloadable one-page PDF generation
-15. Optional enhancement and production deployment planning
+7. Verified Annual Report / 10-K research and analysis
+8. Competitor analysis
+9. Leadership research
+10. Product-fit analysis
+11. A one-page sales intelligence output
+12. Source validation and information-gap reporting
+13. Prompt engineering and prompt-chaining experimentation
+14. Optional PDF document input
+15. Downloadable one-page PDF generation
+16. Optional enhancement and production deployment planning
 
 ---
 
@@ -125,6 +127,9 @@ Sales Opportunity Inputs
 Public Web Research
         |
         v
+Annual Report / 10-K Discovery
+        |
+        v
 Company Strategy Agent
         |
         v
@@ -145,7 +150,7 @@ One-Page PDF Output
 
 Each agent has a specific responsibility and structured output schema.
 
-This architecture improves separation of responsibilities, grounding, output consistency, and uncertainty handling.
+This architecture improves separation of responsibilities, grounding, output consistency, source traceability, and uncertainty handling.
 
 ---
 
@@ -157,7 +162,10 @@ The research process attempts to identify relevant sources such as:
 
 - Company websites
 - Press releases
-- Investor relations pages
+- Investor Relations pages
+- Annual Report pages
+- SEC / 10-K filing pages
+- Investor Relations filing hubs
 - Careers pages
 - Strategy pages
 - Product pages
@@ -165,6 +173,18 @@ The research process attempts to identify relevant sources such as:
 - Competitor websites
 
 The system extracts visible page content and classifies sources before providing the evidence to the specialized GPT agents.
+
+For public companies, the research pipeline performs multi-level discovery. It can move from the company website to Investor Relations pages, then to Annual Report or SEC filing hubs, and finally to specific report pages.
+
+Annual Report / 10-K evidence is prioritized in the research context before general strategy content.
+
+During the final Microsoft test, the research pipeline successfully discovered public sources including:
+
+- Microsoft Investor Relations – SEC Filings
+- Microsoft Investor Relations – Annual Reports
+- Microsoft 2025 Annual Report
+
+The research logic also distinguishes a report-specific download page from a generic software Download Center. Generic download pages are not treated as Annual Report evidence unless the surrounding URL or link evidence clearly identifies the page as part of an Annual Report or filing path.
 
 The application also detects pages that return access blocks or security challenge pages.
 
@@ -181,6 +201,7 @@ The Company Strategy Agent analyzes prospect-company evidence and identifies rel
 Its structured output includes:
 
 - Company Strategy
+- Annual Report / 10-K Insight
 - Business Priorities
 - Technology Signals
 - Buying Signals
@@ -189,7 +210,15 @@ Its structured output includes:
 
 The agent is instructed to distinguish verified public evidence from reasonable inference.
 
-For the Microsoft test case, the analysis identified themes involving cloud modernization, AI adoption, data governance, hybrid cloud technologies, integrated data platforms, security, and sustainability.
+For public companies, the agent can produce an Annual Report / 10-K Insight only when clearly identifiable filing evidence is present in the collected research.
+
+The agent is explicitly instructed not to invent Annual Report figures, dates, percentages, strategic claims, or financial information.
+
+If sufficient Annual Report / 10-K evidence is unavailable, the `annual_report_insight` field remains empty rather than generating unsupported information.
+
+During the final Microsoft test, the research pipeline retrieved Microsoft 2025 Annual Report evidence. The Company Strategy Agent used this evidence to identify strategic themes involving AI and cloud infrastructure, enterprise data-platform modernization, security, governance, Azure, and AI-enabled enterprise technologies.
+
+For the broader Microsoft test case, the analysis also identified themes involving cloud modernization, AI adoption, data governance, hybrid cloud technologies, integrated data platforms, security, and sustainability.
 
 Buying signals are expressed cautiously when direct procurement evidence is unavailable.
 
@@ -253,6 +282,12 @@ A concise summary of the prospective account and sales opportunity.
 
 The prospect company's relevant strategic direction, business priorities, and technology activity.
 
+### Annual Report / 10-K Insight
+
+Verified strategic information extracted from identifiable Annual Report, 10-K, SEC filing, or equivalent Investor Relations evidence when available.
+
+If verified filing evidence is unavailable, the final brief reports that limitation rather than inventing an Annual Report insight.
+
 ### Competitor Insights
 
 Competitive overlap, verified information, and differentiation opportunities.
@@ -289,6 +324,7 @@ The PDF includes:
 
 - Account Overview
 - Company Strategy
+- Annual Report / 10-K Insight
 - Competitor Insights
 - Leadership Information
 - Product Fit
@@ -297,6 +333,8 @@ The PDF includes:
 - Article / Source Links
 
 The one-page format provides a compact sales-preparation document that can be reviewed before a customer meeting or discovery call.
+
+The final Microsoft test confirmed that the Annual Report / 10-K Insight can be included while maintaining the report as a one-page output.
 
 The PDF also includes a reminder that AI-generated sales intelligence should be reviewed and validated by a human before business use.
 
@@ -329,7 +367,9 @@ The model was selected because the prototype requires a balance between:
 - API cost
 - Multi-stage agent execution
 
-A multi-agent application can require several LLM calls for a single sales-research request. Using a smaller GPT-4-class model provides a practical balance between response quality and operational efficiency.
+A multi-agent application can require several LLM calls for a single sales-research request.
+
+Using a smaller GPT-4-class model provides a practical balance between response quality and operational efficiency.
 
 The system uses structured Pydantic schemas to improve consistency between the agents.
 
@@ -351,8 +391,12 @@ The final system uses:
 - Multi-agent decomposition
 - Source-aware context
 - Hallucination-control instructions
+- Filing-evidence validation
+- Annual Report / 10-K grounding rules
 
 Each specialized agent receives only the information required for its task.
+
+The Company Strategy Agent is specifically instructed to generate an Annual Report / 10-K Insight only when identifiable filing evidence is present.
 
 The final report agent synthesizes the structured results rather than attempting to perform the entire research and analysis process using a single prompt.
 
@@ -423,8 +467,13 @@ The agents are instructed to:
 - Preserve relevant source URLs
 - Use cautious language for inferred buying signals
 - Distinguish competitive overlap from verified competitive relationships
+- Never invent Annual Report / 10-K facts
+- Never invent filing figures, dates, or percentages
+- Generate Annual Report / 10-K insights only when identifiable filing evidence is available
 
 When evidence is insufficient, the system reports an **Information Gap** instead of generating an unsupported conclusion.
+
+The Annual Report / 10-K workflow follows the same evidence-grounding rule. If the research pipeline cannot retrieve identifiable filing evidence, the system does not fabricate a filing-based insight.
 
 ---
 
@@ -437,6 +486,19 @@ During testing, some pages returned access-block or security-challenge responses
 The research module detects these pages and marks the source as unsuccessful rather than treating the blocked page as valid research evidence.
 
 Other successfully retrieved public pages can still be used to complete the analysis.
+
+The research module also classifies successful sources by type, including:
+
+- Annual Report
+- Investor Relations
+- Press Release
+- Careers
+- Strategy
+- Competitor
+
+Annual Report sources receive higher priority when constructing the evidence context for the specialized GPT agents.
+
+The final Microsoft research test successfully retrieved public Annual Report evidence even though one other Microsoft page returned an unsuccessful retrieval result.
 
 This behavior improves transparency because the Streamlit application shows the user which research sources were successfully retrieved and which were not.
 
@@ -454,7 +516,7 @@ Potential enhancements include:
 
 - Better source prioritization
 - Source freshness filtering
-- Expanded annual-report and 10-K analysis
+- Deeper Annual Report / 10-K financial-table extraction
 - Additional document parsing
 - Retrieval-Augmented Generation (RAG)
 - Vector search for large document collections
@@ -475,7 +537,9 @@ A future alert system could monitor selected prospect-company sources for new in
 Potential sources include:
 
 - Press releases
-- Investor relations pages
+- Investor Relations pages
+- Annual Reports
+- SEC filings
 - Careers pages
 - Product announcements
 - Strategy updates
@@ -545,7 +609,9 @@ The `.env` file is excluded from Git using `.gitignore`.
 
 API keys and other secrets must never be committed to the public GitHub repository.
 
-The prototype primarily uses publicly available web information. Uploaded documents should also be handled carefully because they may contain confidential business information.
+The prototype primarily uses publicly available web information.
+
+Uploaded documents should also be handled carefully because they may contain confidential business information.
 
 Production implementations should include appropriate access controls and organizational data-handling policies.
 
@@ -564,6 +630,8 @@ The system is designed to avoid:
 - Fabricated procurement activity
 - Unsupported buying intent
 - Unsupported partnerships
+- Fabricated Annual Report / 10-K claims
+- Fabricated financial figures
 - Overstating incomplete evidence
 
 The prototype focuses on business-relevant public information and should not be used to infer sensitive personal characteristics.
@@ -613,6 +681,24 @@ A single general prompt did not provide the same level of structure, uncertainty
 
 **Solution:**  
 The application was redesigned around specialized prompts and multi-agent chaining. A prompt experiment was implemented to compare the two approaches.
+
+### Challenge 7 – Retrieving Verified Annual Report / 10-K Evidence
+
+Annual Report and 10-K information is often not linked directly from a company's homepage. Investor Relations pages may first lead to filing indexes or Annual Report hubs.
+
+**Solution:**  
+The web research pipeline was enhanced with multi-level discovery. It can follow relevant company links to Investor Relations pages, identify Annual Report and SEC filing hubs, and perform an additional discovery pass to locate specific report content.
+
+Annual Report / 10-K evidence is prioritized before general strategy content when building the GPT research context.
+
+The final Microsoft test successfully located Microsoft Investor Relations SEC Filings, Microsoft Investor Relations Annual Reports, and the Microsoft 2025 Annual Report.
+
+### Challenge 8 – Avoiding False Annual Report Classification
+
+Generic Download Center pages can contain terms that resemble report-download paths.
+
+**Solution:**  
+Annual Report classification was refined so that a generic Download Center is not treated as filing evidence. A report-specific download page is accepted only when the surrounding URL or link evidence clearly connects it to an Annual Report or filing path.
 
 ---
 
@@ -686,11 +772,13 @@ Coordinates the complete multi-agent workflow.
 
 ### `web_research.py`
 
-Collects, extracts, validates, and classifies public web research.
+Collects, extracts, validates, and classifies public web research, including multi-level discovery for Investor Relations, Annual Reports, and SEC / 10-K filing evidence.
+
+It also prioritizes filing evidence and prevents generic Download Center pages from being misclassified as Annual Reports.
 
 ### `company_agent.py`
 
-Analyzes company strategy, business priorities, technology signals, buying signals, sources, and information gaps.
+Analyzes company strategy, verified Annual Report / 10-K evidence, business priorities, technology signals, buying signals, relevant sources, and information gaps.
 
 ### `competitor_agent.py`
 
@@ -702,7 +790,7 @@ Identifies relevant leadership information while preventing unsupported executiv
 
 ### `report_agent.py`
 
-Synthesizes the specialized-agent results into the final Sales Account Intelligence Brief.
+Synthesizes the specialized-agent results into the final Sales Account Intelligence Brief, including the Annual Report / 10-K Insight section.
 
 ### `pdf_parser.py`
 
@@ -710,11 +798,11 @@ Extracts text from optional uploaded product-overview PDF files.
 
 ### `pdf_report.py`
 
-Generates the downloadable one-page PDF Sales Account Intelligence Brief.
+Generates the downloadable one-page PDF Sales Account Intelligence Brief, including verified Annual Report / 10-K insight when available.
 
 ### `schemas.py`
 
-Defines the Pydantic models and structured data contracts used by the application.
+Defines the Pydantic models and structured data contracts used by the application, including the `annual_report_insight` field.
 
 ### `config.py`
 
@@ -822,7 +910,7 @@ Select:
 Generate Sales Intelligence Brief
 ```
 
-The application will execute the research and multi-agent workflow and display the final Sales Account Intelligence Brief.
+The application will execute the public research, Annual Report / 10-K discovery, and multi-agent workflow and display the final Sales Account Intelligence Brief.
 
 After generation, select:
 
@@ -871,13 +959,13 @@ CAP 931 Streamlit Sales Opportunity Input Interface
 Completed Sales Research Workflow and Generated Sales Intelligence Brief
 
 **Screenshot 3**  
-Final Sales Intelligence Brief: Account Overview, Company Strategy, and Competitor Insights
+Final Sales Intelligence Brief: Account Overview, Company Strategy, Annual Report / 10-K Insight, and Competitor Insights
 
 **Screenshot 4**  
 Product Fit, Recommended Sales Approach, Risks / Information Gaps, and Source Links
 
 **Screenshot 5**  
-Company Strategy Agent: Business Priorities, Technology Signals, and Buying Signals
+Company Strategy Agent: Annual Report / 10-K Insight, Business Priorities, Technology Signals, and Buying Signals
 
 **Screenshot 6**  
 Competitor Analysis Agent: Competitive Summary, Verified Mentions, Possible Relationships, and Differentiation Opportunities
@@ -886,10 +974,10 @@ Competitor Analysis Agent: Competitive Summary, Verified Mentions, Possible Rela
 Leadership Research Agent: Verified Leadership and Information Gaps
 
 **Screenshot 8**  
-Public Web Research Sources and Source Validation
+Public Web Research Sources, Annual Report / SEC Filing Sources, and Source Validation
 
 **Screenshot 9**  
-Generated One-Page Sales Account Intelligence Brief (PDF Output)
+Generated One-Page Sales Account Intelligence Brief with Annual Report / 10-K Insight
 
 **Screenshot 10**  
 Prompt Engineering Experiment: Baseline vs. Structured Multi-Agent
@@ -904,7 +992,7 @@ The complete CAP 931 project is maintained in GitHub:
 https://github.com/arbanado/CAP931_SALES_AGENT
 ```
 
-The repository contains the application source code, specialized GPT agents, Streamlit interface, public web research pipeline, PDF processing and generation modules, prompt-engineering experiment, documentation, and project configuration.
+The repository contains the application source code, specialized GPT agents, Streamlit interface, public web research pipeline, Annual Report / 10-K discovery, PDF processing and generation modules, prompt-engineering experiment, documentation, and project configuration.
 
 The `.env` file and OpenAI API key are excluded from the repository.
 
@@ -922,6 +1010,8 @@ Current limitations include:
 - Competitive relationships cannot be assumed without evidence.
 - The system does not have access to private procurement information.
 - Buying signals are not proof of actual purchase intent.
+- Annual Report / 10-K analysis depends on successfully retrievable public filing evidence.
+- Some filings may be PDFs or use website structures that require additional parsing.
 - Generated insights require human review.
 - PDF extraction depends on the structure and readability of the uploaded document.
 - The prompt-experiment scores are heuristic and specific to the tested scenario.
@@ -935,7 +1025,8 @@ Future versions could add:
 - Automated press-release monitoring
 - Job-posting monitoring
 - Email alerts
-- 10-K and annual-report retrieval
+- Deeper Annual Report / 10-K financial-table extraction
+- Direct SEC filing API integration
 - Advanced document ingestion
 - RAG and vector search
 - Source freshness scoring
@@ -950,13 +1041,17 @@ Future versions could add:
 - Automated testing and observability
 - Multi-model routing based on task complexity
 
+Annual Report / 10-K retrieval itself is no longer listed as a future feature because the current prototype already implements public filing discovery and filing-grounded strategic analysis.
+
 ---
 
 ## 36. Conclusion
 
-The CAP 931 Multi-Agent Sales Assistant demonstrates how GPT models, public web research, structured prompting, and specialized AI agents can be combined to support sales account preparation.
+The CAP 931 Multi-Agent Sales Assistant demonstrates how GPT models, public web research, structured prompting, specialized AI agents, and public-company filing research can be combined to support sales account preparation.
 
-The final prototype successfully integrates a Streamlit interface, public URL research, company strategy analysis, competitor analysis, leadership research, product-fit reasoning, source validation, information-gap reporting, prompt experimentation, optional PDF input, and downloadable one-page PDF generation.
+The final prototype successfully integrates a Streamlit interface, public URL research, multi-level Investor Relations and Annual Report / 10-K discovery, company strategy analysis, verified filing-based strategic insights, competitor analysis, leadership research, product-fit reasoning, source validation, information-gap reporting, prompt experimentation, optional PDF input, and downloadable one-page PDF generation.
+
+The final Microsoft test demonstrated that the research pipeline can discover public Investor Relations, SEC filing, Annual Report, and specific Annual Report evidence and use that evidence to generate an Annual Report / 10-K Insight while maintaining hallucination-control rules.
 
 The prompt engineering experiment showed a 57.14-point improvement in the defined heuristic evaluation when moving from the baseline single-prompt approach to the structured multi-agent approach.
 
