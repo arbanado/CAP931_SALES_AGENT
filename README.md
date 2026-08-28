@@ -31,11 +31,9 @@ The application combines:
 - structured output validation;
 - prompt chaining;
 - evidence-grounding rules;
-- and a final Sales Account Intelligence Brief.
+- and a final one-page Sales Account Intelligence Brief.
 
-Instead of relying on a single general-purpose prompt, the project separates the research process into specialized agents.
-
-The final workflow is:
+Instead of relying on one general-purpose prompt, the system separates the research and analysis process into specialized agents.
 
 ```text
 Sales Representative
@@ -44,7 +42,7 @@ Streamlit Interface
         ↓
 Validated Sales Inputs
         ↓
-Advanced Public Web Research
+Public Web Research
         ↓
 Company Strategy Agent
         ↓
@@ -55,6 +53,8 @@ Leadership Research Agent
 Final Report Agent
         ↓
 Sales Account Intelligence Brief
+        ↓
+One-Page PDF
 ```
 
 The system is designed to distinguish verified public evidence from inference and to report missing information instead of fabricating unsupported facts.
@@ -81,6 +81,7 @@ The project addresses the CAP 931 objectives by implementing:
 - Pydantic validation;
 - source-grounded analysis;
 - a one-page Sales Intelligence Brief;
+- downloadable one-page PDF output;
 - prompt experimentation;
 - output-quality evaluation;
 - an alert-system design;
@@ -93,23 +94,23 @@ The project addresses the CAP 931 objectives by implementing:
 
 The application is intentionally limited to sales-account intelligence.
 
-It is designed to help a sales representative answer questions such as:
+It is designed to help a sales representative determine:
 
-- What is the prospect company's relevant strategy?
-- What public technology or transformation initiatives exist?
-- What cloud, data, AI, or governance signals are visible?
-- Which supplied companies have competitive overlap with the prospect?
-- Are competitor relationships directly verified or only inferred?
-- Are relevant leaders publicly identifiable?
-- How may the proposed product align with the prospect's priorities?
-- What potential buying signals exist?
-- What information remains unknown?
-- What discovery questions should the sales representative ask?
-- Which public sources support the generated analysis?
+- the prospect company's relevant strategy;
+- public technology or transformation initiatives;
+- cloud, data, AI, governance, and modernization signals;
+- competitive overlap with supplied companies;
+- whether competitor relationships are verified or inferred;
+- whether relevant leaders can be verified;
+- how the proposed product may align with the prospect's priorities;
+- possible buying signals;
+- important information gaps;
+- recommended discovery questions;
+- supporting public sources.
 
 The application is not intended to operate as a general-purpose chatbot.
 
-Prompt constraints and role-specific agent instructions keep the workflow focused on account research, sales preparation, competitor analysis, leadership research, and strategy analysis.
+Prompt constraints and role-specific instructions keep the system focused on sales research and account preparation.
 
 ---
 
@@ -127,10 +128,11 @@ The project was developed using:
 - BeautifulSoup
 - PyPDF
 - python-dotenv
+- ReportLab
 - Git
 - GitHub
 
-The final Python version used during development was:
+Final Python environment:
 
 ```text
 Python 3.12.13
@@ -140,7 +142,7 @@ Python 3.12.13
 
 # 5. User Inputs
 
-The Streamlit interface collects the dynamic inputs required by CAP 931.
+The Streamlit interface implements the dynamic inputs required by CAP 931.
 
 ## Product Name
 
@@ -174,7 +176,7 @@ Cloud Data Platform
 
 ## Competitor URLs
 
-One or more comparison or competitor URLs.
+One or more competitor or comparison URLs.
 
 Example:
 
@@ -185,8 +187,6 @@ https://www.databricks.com
 
 ## Value Proposition
 
-A concise statement explaining the value delivered by the product.
-
 Example:
 
 ```text
@@ -195,8 +195,6 @@ enterprise data faster using a scalable cloud data platform.
 ```
 
 ## Target Customer
-
-The person or role the sales representative is trying to reach.
 
 Example:
 
@@ -208,7 +206,7 @@ Chief Data Officer
 
 The user may optionally upload a product overview sheet or deck in PDF format.
 
-The application extracts readable text from the PDF and makes that information available as additional product context.
+The application extracts readable text from the PDF and makes it available as additional context for the agents.
 
 ---
 
@@ -218,9 +216,9 @@ The prototype uses:
 
 **OpenAI GPT-4.1-mini**
 
-The model is configured through the project's environment configuration instead of being hard-coded throughout the application.
+The model is configured through environment variables rather than hard-coded throughout the application.
 
-Example `.env` configuration:
+Example `.env`:
 
 ```text
 OPENAI_API_KEY=your_openai_api_key_here
@@ -229,7 +227,7 @@ OPENAI_MODEL=gpt-4.1-mini
 
 ## Model Selection Rationale
 
-GPT-4.1-mini was selected because the project requires a practical balance among:
+GPT-4.1-mini was selected to provide a practical balance among:
 
 - instruction following;
 - structured output generation;
@@ -241,13 +239,13 @@ GPT-4.1-mini was selected because the project requires a practical balance among
 - API integration;
 - multi-agent scalability.
 
-The application makes several model calls during a complete workflow, so a smaller instruction-following GPT model provides a useful balance between capability and efficiency.
+The application makes multiple model calls during a complete workflow. A smaller instruction-following GPT model therefore provides an effective balance between capability and efficiency.
 
-## Model Strengths
+## Strengths
 
-The selected model performs well for:
+The selected model is useful for:
 
-- structured JSON output;
+- structured JSON generation;
 - summarization;
 - information extraction;
 - evidence synthesis;
@@ -256,33 +254,26 @@ The selected model performs well for:
 - business analysis;
 - concise recommendation generation.
 
-## Model Limitations
+## Limitations
 
 The model can still:
 
 - misinterpret ambiguous evidence;
 - miss relevant details;
 - produce unsupported inference;
-- depend heavily on the quality of retrieved sources.
+- depend heavily on retrieved source quality.
 
-For these reasons, the application uses:
-
-- evidence-grounding rules;
-- structured schemas;
-- source URLs;
-- information-gap reporting;
-- cautious uncertainty language;
-- human review.
+The application therefore uses evidence-grounding rules, Pydantic schemas, source URLs, information-gap reporting, cautious uncertainty language, and human review.
 
 ---
 
 # 7. Multi-Agent Architecture
 
-The final prototype uses four specialized GPT agents.
+The prototype uses four specialized GPT agents.
 
 ## Agent 1 – Company Strategy Agent
 
-The Company Strategy Agent analyzes public information related to the prospect company.
+The Company Strategy Agent analyzes public information associated with the prospect.
 
 Its structured output includes:
 
@@ -293,22 +284,13 @@ Its structured output includes:
 - relevant sources;
 - information gaps.
 
-The agent prioritizes prospect-company sources such as:
+The agent prioritizes sources such as strategy pages, technology pages, press releases, careers pages, investor-relations pages, and relevant product information.
 
-- strategy pages;
-- product pages;
-- press releases;
-- careers pages;
-- investor-relations pages;
-- relevant technology pages.
-
-The agent is explicitly instructed not to treat generic product marketing as confirmed buying intent.
-
----
+It is explicitly instructed not to treat general marketing activity as confirmed purchasing intent.
 
 ## Agent 2 – Competitor Analysis Agent
 
-The Competitor Analysis Agent evaluates competitive information associated with the user-supplied comparison companies.
+The Competitor Analysis Agent evaluates competitive information associated with the supplied companies.
 
 It distinguishes among:
 
@@ -317,60 +299,37 @@ It distinguishes among:
 - possible relationships;
 - insufficient evidence.
 
-The agent does not automatically call a supplied company a verified competitor simply because the user entered its URL.
+A competitor URL supplied by the user is not automatically treated as proof of a verified competitive relationship.
 
-This was an important improvement made during testing.
-
-Similar technology capabilities can indicate **competitive overlap**, but they do not independently prove:
-
-- a direct competitive relationship;
-- a partnership;
-- customer usage;
-- a contract;
-- a technology integration.
-
----
+Technology overlap may indicate competitive overlap but does not independently prove a partnership, contract, customer relationship, or direct competitive relationship.
 
 ## Agent 3 – Leadership Research Agent
 
-The Leadership Research Agent attempts to identify relevant leaders using supplied prospect-company evidence.
+The Leadership Research Agent attempts to identify relevant leaders using supplied public evidence.
 
-Potential roles include:
-
-- Chief Data Officer;
-- Chief Information Officer;
-- Chief Technology Officer;
-- Chief Executive Officer;
-- Chief Operating Officer;
-- Chief Security Officer;
-- EVP;
-- SVP;
-- VP;
-- other relevant executives.
+Potential roles include Chief Data Officer, CIO, CTO, CEO, COO, EVP, SVP, VP, and other relevant executives.
 
 The agent must not invent:
 
 - names;
-- job titles;
+- titles;
 - quotes;
 - responsibilities;
 - purchasing authority.
 
-If no relevant leader can be verified, the correct result is:
+If a leader cannot be verified, the correct result may be:
 
 ```text
 leaders: []
 ```
 
-together with clearly documented information gaps.
-
----
+with the missing information documented as an information gap.
 
 ## Agent 4 – Final Report Agent
 
-The Final Report Agent synthesizes the structured findings from the specialized agents.
+The Final Report Agent synthesizes the findings produced by the specialized agents.
 
-It generates the final Sales Account Intelligence Brief containing:
+The final brief contains:
 
 1. Account Overview
 2. Company Strategy
@@ -381,13 +340,11 @@ It generates the final Sales Account Intelligence Brief containing:
 7. Risks / Information Gaps
 8. Article / Source Links
 
-The Report Agent is instructed not to introduce new unsupported facts that were not established by the earlier research agents.
+The Report Agent is instructed not to introduce unsupported facts that were not established by the research process.
 
 ---
 
 # 8. Multi-Agent Workflow
-
-The complete workflow is:
 
 ```text
 Sales Representative
@@ -407,33 +364,35 @@ Streamlit Interface
 SalesAgentInput Validation
         │
         ▼
-Advanced Public Web Research
+Public Web Research
         │
         ▼
 Research Context
         │
-        ├───────────────┬────────────────┐
-        ▼               ▼                ▼
-Company Strategy   Competitor       Leadership
-Agent              Agent            Agent
-        │               │                │
-        └───────────────┴────────────────┘
-                        │
-                        ▼
-                Final Report Agent
-                        │
-                        ▼
-           Sales Account Intelligence Brief
-                        │
-                        ▼
-             Streamlit Display / Download
+        ├──────────────┬──────────────┐
+        ▼              ▼              ▼
+Company Strategy   Competitor     Leadership
+Agent              Agent          Agent
+        │              │              │
+        └──────────────┴──────────────┘
+                       │
+                       ▼
+               Final Report Agent
+                       │
+                       ▼
+          Sales Account Intelligence Brief
+                       │
+                       ▼
+               One-Page PDF Output
 ```
+
+The orchestrator coordinates the complete workflow.
 
 ---
 
 # 9. Structured Data Validation
 
-The application uses Pydantic schemas to create predictable inputs and outputs.
+The application uses Pydantic schemas to provide predictable inputs and outputs.
 
 Main schemas include:
 
@@ -459,22 +418,20 @@ Structured validation improves:
 
 ---
 
-# 10. Advanced Public Web Research
+# 10. Public Web Research
 
-The application includes an advanced public web-research component.
+The application includes a public web-research component.
 
 It can retrieve and classify publicly accessible sources such as:
 
-- company homepage;
-- company strategy pages;
+- company pages;
+- strategy pages;
 - technology pages;
 - press releases;
 - investor-relations pages;
 - careers pages;
 - annual-report or filing-related pages when discoverable;
-- competitor homepages.
-
-The system attempts to discover useful internal links from the prospect's public website.
+- competitor websites.
 
 Source categories include:
 
@@ -489,15 +446,15 @@ annual_report
 competitor
 ```
 
-The retrieved webpage text is cleaned and converted into structured evidence blocks before being supplied to the agents.
+Retrieved webpage content is cleaned and converted into structured evidence before being supplied to the GPT agents.
 
 ---
 
 # 11. Blocked and Unavailable Sources
 
-A successful HTTP response does not always mean that a webpage contains useful evidence.
+A successful network response does not necessarily mean that the returned page contains usable evidence.
 
-The research system therefore detects common blocked or challenge pages containing messages such as:
+The research system detects common blocked or security-challenge pages containing messages such as:
 
 ```text
 Your request has been blocked
@@ -516,7 +473,7 @@ The system does not fabricate replacement evidence when retrieval fails.
 
 # 12. Latest Web Research Test
 
-The final Microsoft test produced:
+The Microsoft test produced:
 
 ```text
 total_sources: 11
@@ -535,7 +492,7 @@ strategy
 competitor
 ```
 
-The final workflow later reported:
+The final workflow reported:
 
 ```text
 SOURCES: 11
@@ -543,17 +500,15 @@ WARNINGS: 1
 FINAL MULTI-AGENT V2 COMPLETE
 ```
 
-The single warning represented an inaccessible or blocked research source.
+The warning represented an inaccessible or blocked research source.
 
-The remaining available evidence was still sufficient for the workflow to continue.
+The remaining evidence was sufficient for the workflow to continue.
 
 ---
 
 # 13. Data Integration
 
-CAP 931 requires URLs and external context to improve LLM responses.
-
-The implemented data-integration flow is:
+The implemented integration flow is:
 
 ```text
 Prospect / Competitor URLs
@@ -573,13 +528,13 @@ Specialized GPT Agents
 Evidence-Grounded Sales Intelligence
 ```
 
-The agents therefore analyze retrieved public evidence instead of relying only on the LLM's internal knowledge.
+The agents therefore analyze retrieved public evidence rather than relying only on the LLM's internal knowledge.
 
 ---
 
 # 14. PDF Processing
 
-The optional PDF-processing component is implemented in:
+Optional product-document processing is implemented in:
 
 ```text
 pdf_parser.py
@@ -591,27 +546,16 @@ It supports:
 - Streamlit uploaded PDF objects;
 - page-by-page text extraction;
 - text cleaning;
-- maximum character limits;
+- character limits;
 - PDF-content summaries.
 
-The extracted product information can provide additional context for the agents.
-
-Future versions could add support for:
-
-- PowerPoint;
-- Word documents;
-- product documentation;
-- customer-success stories;
-- technical guides;
-- pricing documents.
+The extracted product information can provide additional context to the multi-agent workflow.
 
 ---
 
 # 15. Company Strategy Analysis
 
-The final Company Strategy Agent was improved to use multiple evidence types.
-
-It analyzes:
+The Company Strategy Agent analyzes:
 
 - strategy pages;
 - technology pages;
@@ -632,29 +576,17 @@ The Microsoft test identified business-priority categories such as:
 - digital transformation;
 - sustainability.
 
-Technology signals included public evidence associated with:
-
-- SQL Server;
-- Microsoft Fabric;
-- Azure;
-- Power Platform;
-- Microsoft AI capabilities.
+Technology signals included public evidence associated with SQL Server, Microsoft Fabric, Azure, Power Platform, and Microsoft AI capabilities.
 
 ---
 
 # 16. Buying Signal Handling
 
-Buying signals require a higher evidence threshold than general business strategy.
+Buying signals require a higher evidence threshold than general company strategy.
 
-The Company Strategy Agent is instructed not to classify:
+The agent does not treat generic cloud activity, ordinary AI marketing, or general technology capabilities as confirmed purchasing intent.
 
-- generic cloud activity;
-- ordinary AI marketing;
-- general technology capabilities
-
-as confirmed purchase intent.
-
-Instead, the model uses carefully qualified phrases such as:
+Instead, qualified language is used, including:
 
 ```text
 Potential signal
@@ -662,9 +594,9 @@ May indicate
 Could support a sales hypothesis
 ```
 
-The final Microsoft analysis identified possible strategic alignment but did not claim that Microsoft had an active procurement process for the proposed product.
+The Microsoft analysis identified potential strategic alignment but did not claim that Microsoft had an active procurement process for the proposed product.
 
-Information gaps included:
+Important information gaps included:
 
 - no verified procurement plan;
 - no confirmed budget;
@@ -675,9 +607,9 @@ Information gaps included:
 
 # 17. Competitor Analysis Results
 
-The final Competitor Agent V2 improved the treatment of competitor evidence.
+The Microsoft test used Snowflake and Databricks as supplied comparison companies.
 
-In the Microsoft test, Snowflake and Databricks showed **competitive overlap** in areas such as:
+The analysis found competitive overlap in areas such as:
 
 - enterprise data platforms;
 - AI integration;
@@ -686,47 +618,32 @@ In the Microsoft test, Snowflake and Databricks showed **competitive overlap** i
 - governance;
 - unified data capabilities.
 
-However, the final analysis did not claim that Microsoft publicly identified those companies as competitors or partners unless direct supporting evidence existed.
+However, the system did not claim that Microsoft publicly identified those companies as competitors or partners without direct evidence.
 
-The agent explicitly documented information gaps such as:
-
-- no direct evidence of Microsoft's competitive positioning against the supplied companies;
-- no confirmed partnership based only on compatible technology;
-- limited evidence of direct customer relationships;
-- incomplete product-by-product competitive comparisons.
+This demonstrates the distinction between competitive overlap and a verified business relationship.
 
 ---
 
 # 18. Leadership Analysis Results
 
-The Leadership Agent V2 was tested with the Microsoft scenario.
+The supplied Microsoft evidence did not verify a Chief Data Officer or equivalent executive directly responsible for the proposed cloud-data-platform opportunity.
 
-The public evidence supplied to the workflow did not verify a Chief Data Officer or equivalent executive directly responsible for the proposed cloud-data-platform opportunity.
-
-The final output therefore returned:
-
-```text
-leaders: []
-```
+The Leadership Agent therefore returned no verified leader rather than inventing one.
 
 Information gaps included:
 
 - no verified Chief Data Officer or equivalent role;
 - no named executive explicitly responsible for the proposed data-platform strategy;
-- no verified executive statement about the specific sales opportunity;
+- no verified executive statement about the specific opportunity;
 - no verified procurement decision-maker.
 
-This demonstrates a key safety behavior of the application.
-
-The system reports insufficient evidence instead of fabricating leadership information.
+This demonstrates an important hallucination-control behavior of the application.
 
 ---
 
 # 19. Final Sales Intelligence Brief
 
-The final multi-agent workflow successfully generated a complete Sales Account Intelligence Brief.
-
-The brief contains:
+The complete workflow successfully generates a Sales Account Intelligence Brief containing:
 
 ```text
 Account Overview
@@ -739,14 +656,12 @@ Risks / Information Gaps
 Article / Source Links
 ```
 
-The final Product Fit section uses qualified language.
+Product Fit uses qualified language explaining how the proposed solution **may align** with public prospect priorities rather than claiming confirmed demand.
 
-It explains how a proposed solution **may align** with the prospect's priorities rather than claiming confirmed product demand.
-
-The Recommended Sales Approach focuses on practical discovery activities, including:
+The Recommended Sales Approach focuses on practical discovery activities such as:
 
 - validating current technology initiatives;
-- identifying relevant decision-makers;
+- identifying decision-makers;
 - investigating technology gaps;
 - validating integration opportunities;
 - confirming procurement timing;
@@ -754,7 +669,38 @@ The Recommended Sales Approach focuses on practical discovery activities, includ
 
 ---
 
-# 20. Example Test Scenario
+# 20. One-Page PDF Generation
+
+The final Streamlit application can generate and download the Sales Account Intelligence Brief as a **one-page PDF**.
+
+The PDF contains:
+
+- Account Overview;
+- Company Strategy;
+- Competitor Insights;
+- Leadership Information;
+- Product Fit;
+- Recommended Sales Approach;
+- Risks / Information Gaps;
+- Article / Source Links.
+
+The PDF output is designed to give a sales representative a concise account-research document that can be reviewed before a customer conversation.
+
+The Streamlit interface provides:
+
+```text
+Download One-Page PDF
+```
+
+The final PDF was successfully generated and verified as:
+
+```text
+1 of 1 page
+```
+
+---
+
+# 21. Example Test Scenario
 
 The final workflow was tested using:
 
@@ -783,23 +729,17 @@ Target Customer:
 Chief Data Officer
 ```
 
-The completed workflow produced:
-
-```text
-SOURCES: 11
-WARNINGS: 1
-FINAL MULTI-AGENT V2 COMPLETE
-```
+The workflow completed successfully and generated the final one-page Sales Account Intelligence Brief.
 
 ---
 
-# 21. Prompt Engineering
+# 22. Prompt Engineering
 
-Prompt engineering was a major part of the project.
+Prompt engineering was a major component of the project.
 
-The project evolved from a broad single-prompt approach to specialized role-based prompts with structured chaining.
+The project evolved from a broad single-prompt approach to specialized role-based prompts and structured prompt chaining.
 
-Techniques used include:
+Techniques include:
 
 - role-based prompting;
 - explicit system instructions;
@@ -816,7 +756,7 @@ Techniques used include:
 
 ---
 
-# 22. Prompt Chaining
+# 23. Prompt Chaining
 
 The final application implements prompt chaining through specialized agents.
 
@@ -840,20 +780,16 @@ Final Synthesis Prompt
 Sales Account Intelligence Brief
 ```
 
-The orchestrator manages the complete sequence.
-
 ---
 
-# 23. Prompt Engineering Experiment
+# 24. Prompt Engineering Experiment
 
 A formal experiment compared:
 
 1. Baseline Single Prompt
 2. Structured Multi-Agent Prompting
 
-The experiment used heuristic quality indicators designed for this project.
-
-Final results:
+The experiment used project-specific heuristic quality indicators.
 
 | Metric                | Baseline Single Prompt | Structured Multi-Agent |
 | --------------------- | ---------------------: | ---------------------: |
@@ -869,68 +805,26 @@ Improvement:
 +57.14 points
 ```
 
-Results were saved to:
+Results are saved in:
 
 ```text
 results/prompt_experiments.csv
 ```
 
----
+These values are heuristic quality indicators for this experiment and are **not** proof of general model accuracy.
 
-# 24. Prompt Experiment Interpretation
-
-The baseline prompt achieved:
-
-```text
-42.86/100
-```
-
-The Structured Multi-Agent workflow achieved:
-
-```text
-100.00/100
-```
-
-The structured approach improved the project's heuristic score by:
-
-```text
-+57.14 points
-```
-
-Section completion improved from:
-
-```text
-71.43% → 100.00%
-```
-
-The structured workflow also demonstrated the presence of:
-
-```text
-Uncertainty Handling: 100%
-Source Usage: 100%
-Hallucination Control: 100%
-```
-
-The results suggest that specialized role prompts, evidence-grounding constraints, source requirements, uncertainty instructions, and agent chaining improved the completeness and reliability of the output for this experiment.
-
-These scores are **heuristic quality indicators**, not statistical proof of general model accuracy.
-
-A score of `100/100` does not mean that every statement generated by the LLM is guaranteed to be factually correct.
-
-Human validation remains necessary.
+A score of 100/100 does not mean every generated statement is guaranteed to be factually correct.
 
 ---
 
 # 25. Hallucination Control
 
-The application includes several safeguards designed to reduce unsupported claims.
+The agents are instructed to:
 
-Agents are instructed to:
-
-- use only supplied evidence;
+- use supplied evidence;
 - distinguish evidence from inference;
 - avoid fabricated executives;
-- avoid fabricated job titles;
+- avoid fabricated titles;
 - avoid fabricated quotations;
 - avoid fabricated partnerships;
 - avoid fabricated contracts;
@@ -941,21 +835,13 @@ Agents are instructed to:
 - preserve source URLs;
 - use cautious uncertainty language.
 
-For example, when leadership evidence is unavailable, the system reports:
-
-```text
-No verified leader identified.
-```
-
-rather than inventing a likely executive.
+When evidence is insufficient, the system reports the information gap rather than filling it with an unsupported assumption.
 
 ---
 
 # 26. Streamlit Interface
 
-The application uses Streamlit as the user interface.
-
-The final interface includes:
+The final Streamlit interface includes:
 
 - Product Name;
 - Prospect Company URL;
@@ -965,9 +851,9 @@ The final interface includes:
 - Competitor URLs;
 - Optional Product Overview PDF;
 - Generate Sales Intelligence Brief button;
-- workflow progress;
-- final sales brief;
-- downloadable Markdown report;
+- workflow status;
+- final Sales Intelligence Brief;
+- **Download One-Page PDF** button;
 - specialized-agent results;
 - public research sources;
 - warnings;
@@ -975,52 +861,64 @@ The final interface includes:
 
 ---
 
-# 27. Streamlit Output
+# 27. Specialized Agent Results
 
-After a successful run, the application displays:
+After a successful workflow, Streamlit provides expandable specialized-agent results.
 
-```text
-Final Sales Intelligence Brief
-Specialized Agent Results
-Public Research Sources
-```
-
-Specialized results are available for:
+These include:
 
 ```text
 Company Strategy Agent
 Competitor Analysis Agent
 Leadership Research Agent
+Public Research Sources
 ```
 
-The public research section displays:
+The Company Strategy section presents:
+
+- Company Strategy;
+- Business Priorities;
+- Technology Signals;
+- Buying Signals;
+- Relevant Sources;
+- Information Gaps.
+
+The Competitor Analysis section presents:
+
+- Competitive Summary;
+- Verified Mentions;
+- Possible Relationships;
+- Differentiation Opportunities;
+- Relevant Sources;
+- Information Gaps.
+
+The Leadership section presents:
+
+- Leadership Summary;
+- Verified Leaders when available;
+- Information Gaps.
+
+---
+
+# 28. Public Research Source Validation
+
+The Streamlit application displays the public sources used by the research workflow.
+
+For each source, the interface can show:
 
 - source title;
 - source type;
 - URL;
 - fetch status;
-- retrieval errors when applicable.
+- retrieval error when applicable.
 
----
-
-# 28. Downloadable Output
-
-The final Sales Intelligence Brief can be downloaded from Streamlit as a Markdown document.
-
-This allows the sales representative to save or reuse the generated one-page account research.
-
-Future versions could also generate:
-
-- DOCX;
-- PDF;
-- PowerPoint;
-- CRM records.
+This improves transparency and helps a human reviewer determine whether the generated analysis is supported by accessible public evidence.
 
 ---
 
 # 29. Optional Enhancement – Alert System
 
-A future version could monitor prospect accounts for new public information.
+A future version could monitor prospect accounts for new information.
 
 Users could define keywords such as:
 
@@ -1036,25 +934,18 @@ hiring
 modernization
 ```
 
-The monitoring process could periodically check:
+The monitoring system could periodically check:
 
-- company press releases;
+- press releases;
 - newsrooms;
 - careers pages;
 - investor-relations pages;
 - regulatory filings;
-- relevant announcements.
+- relevant company announcements.
 
-When new relevant information is detected, the system could:
+When new relevant information is detected, the system could retrieve it, compare it with existing evidence, classify relevance, summarize the update, preserve the source link, and send an email alert.
 
-1. retrieve the new source;
-2. compare it with previously collected evidence;
-3. determine relevance;
-4. summarize the update;
-5. preserve the original link;
-6. email an alert to the sales representative.
-
-Details are documented in:
+Additional details are documented in:
 
 ```text
 docs/optional_enhancements.md
@@ -1064,9 +955,9 @@ docs/optional_enhancements.md
 
 # 30. Optional Enhancement – Sales Meeting Deck
 
-A future specialized agent could convert the final sales brief into a presentation.
+A future specialized agent could convert the Sales Intelligence Brief into a presentation for a sales meeting.
 
-Potential slides could include:
+Possible slides:
 
 ```text
 1. Prospect Overview
@@ -1080,15 +971,15 @@ Potential slides could include:
 9. Sources
 ```
 
-Human review should occur before using the presentation in a customer meeting.
+Human review should occur before customer-facing use.
 
 ---
 
 # 31. Optional Enhancement – Document Intelligence
 
-The current prototype supports optional PDF extraction.
+The current prototype supports PDF extraction.
 
-A future version could use retrieval-augmented generation for larger collections of internal sales documents such as:
+A future version could use retrieval-augmented generation for larger collections of documents such as:
 
 - product decks;
 - technical documentation;
@@ -1098,7 +989,7 @@ A future version could use retrieval-augmented generation for larger collections
 - security documentation;
 - customer-success stories.
 
-Relevant passages could be retrieved only when needed instead of supplying full documents to every agent.
+Relevant passages could be retrieved only when needed rather than supplying entire document collections to every agent.
 
 ---
 
@@ -1126,7 +1017,7 @@ LLM API
 Approved Public / Internal Data Sources
 ```
 
-The complete production plan is documented in:
+The complete deployment plan is documented in:
 
 ```text
 docs/production_deployment.md
@@ -1145,7 +1036,7 @@ A production version should include:
 - secure file handling;
 - input validation;
 - upload validation;
-- encrypted data transmission;
+- encrypted transmission;
 - audit logging;
 - dependency vulnerability scanning;
 - rate limiting.
@@ -1154,11 +1045,9 @@ The OpenAI API key must never be committed to GitHub.
 
 ---
 
-# 34. Scalability
+# 34. Scalability and Monitoring
 
-The current application executes research interactively.
-
-A larger production version could use:
+A larger production implementation could use:
 
 - background workers;
 - asynchronous tasks;
@@ -1169,22 +1058,11 @@ A larger production version could use:
 - retry mechanisms;
 - source deduplication.
 
-Caching frequently requested information could reduce:
-
-- latency;
-- network requests;
-- OpenAI API usage;
-- operating cost.
-
----
-
-# 35. Monitoring
-
-Production monitoring could track:
+Monitoring could track:
 
 - web retrieval failures;
 - application exceptions;
-- OpenAI latency;
+- LLM latency;
 - token usage;
 - estimated API costs;
 - malformed responses;
@@ -1192,25 +1070,15 @@ Production monitoring could track:
 - fetch-success rates;
 - application availability.
 
-Prompt and model changes should also be tested before deployment.
-
 ---
 
-# 36. Challenges and Solutions
+# 35. Challenges and Solutions
 
 ## Challenge 1 – Windows Smart App Control
 
-Windows Smart App Control blocked the direct Streamlit executable and produced:
+Windows Smart App Control blocked the direct Streamlit executable.
 
-```text
-Failed to spawn: 'streamlit'
-Application Control policy has blocked this file.
-os error 4551
-```
-
-### Solution
-
-The application was launched through the Python module interface:
+The application was successfully launched through Python:
 
 ```powershell
 uv run python -m streamlit run app.py
@@ -1218,62 +1086,33 @@ uv run python -m streamlit run app.py
 
 This allowed development to continue without disabling Windows security protections.
 
----
-
 ## Challenge 2 – Webpage Access Restrictions
 
-Some websites block automated requests.
+Some websites block automated retrieval.
 
-### Solution
-
-The application:
-
-- records source success/failure;
-- detects common blocked-page messages;
-- excludes blocked pages from LLM evidence;
-- reports warnings;
-- continues with accessible sources;
-- does not fabricate missing evidence.
-
-The final Microsoft workflow reported one research warning.
-
----
+The application records source success or failure, detects blocked pages, excludes unusable content from the LLM evidence, reports warnings, and continues with accessible sources.
 
 ## Challenge 3 – Research Schema Mismatch
 
-During Advanced Web Research development, the research code attempted to use:
+An early version attempted to use:
 
 ```text
 source.text
 ```
 
-while the Pydantic schema defined:
+while the Pydantic schema used:
 
 ```text
 source.extracted_text
 ```
 
-This produced an `AttributeError`.
-
-### Solution
-
-The web-research implementation was standardized on:
-
-```text
-extracted_text
-```
-
-and the module was recompiled and retested successfully.
-
----
+The implementation was standardized on `extracted_text`.
 
 ## Challenge 4 – Unsupported Competitor Claims
 
-The earlier prompt could interpret overlapping technology offerings as verified competitor relationships.
+Earlier prompts could interpret technology overlap as proof of a competitive relationship.
 
-### Solution
-
-Competitor Agent V2 explicitly distinguishes:
+Competitor Agent V2 now distinguishes:
 
 ```text
 verified mention
@@ -1282,61 +1121,53 @@ possible relationship
 insufficient evidence
 ```
 
-The prompt prevents a supplied competitor URL from automatically becoming evidence of a verified competitive relationship.
-
----
-
 ## Challenge 5 – Leadership Hallucination Risk
 
-A user-entered target role such as `Chief Data Officer` does not prove that a corresponding person exists at the prospect company.
+A user-entered target role does not prove that a corresponding executive exists.
 
-### Solution
-
-Leadership Agent V2 requires public evidence for both:
-
-- identity;
-- title.
-
-When evidence is insufficient, the agent returns:
-
-```text
-leaders: []
-```
-
----
+Leadership Agent V2 requires public evidence before returning a leader.
 
 ## Challenge 6 – Buying Signal Interpretation
 
-General AI or cloud strategy does not prove purchase intent.
+General AI or cloud strategy does not prove purchasing intent.
 
-### Solution
-
-The Company Strategy Agent uses a high evidence threshold for buying signals and qualified language such as:
-
-```text
-may indicate
-potential signal
-could support a sales hypothesis
-```
-
----
+The Company Strategy Agent therefore uses qualified language and documents missing procurement evidence.
 
 ## Challenge 7 – LLM Output Consistency
 
-Unstructured LLM responses can be difficult to process.
+Unstructured model responses can be difficult to process reliably.
 
-### Solution
+The project uses structured JSON, Pydantic schemas, standardized fields, and response validation.
 
-The project uses:
+## Challenge 8 – Streamlit Result Schema Integration
 
-- JSON requirements;
-- Pydantic schemas;
-- standardized agent fields;
-- response validation.
+During final Streamlit integration, some UI rendering code referenced result attributes that did not match the final `SalesAgentResult` schema.
+
+The interface was updated to use the final schema fields:
+
+```text
+input_data
+company_analysis
+competitor_analysis
+leadership_analysis
+final_brief
+research_sources
+warnings
+```
+
+This removed the `AttributeError` issues in the specialized-agent and public-source sections.
+
+## Challenge 9 – One-Page PDF Generation
+
+The initial application provided a Markdown download, but the final CAP 931 deliverable required a more presentation-ready one-page document.
+
+The final application was updated to generate a PDF directly from the final Sales Intelligence Brief.
+
+The resulting report was successfully validated as a single-page PDF.
 
 ---
 
-# 37. Time Management
+# 36. Time Management
 
 Approximate project time allocation:
 
@@ -1345,21 +1176,21 @@ Approximate project time allocation:
 | Project planning and architecture     |                     8% |
 | UV / Python environment setup         |                     8% |
 | Configuration and schemas             |                     8% |
-| Advanced public web research          |                    18% |
+| Public web research                   |                    18% |
 | Company Strategy Agent                |                    10% |
 | Competitor Agent                      |                     9% |
 | Leadership Agent                      |                     8% |
 | Final Report Agent                    |                     8% |
 | Multi-agent orchestration             |                     6% |
-| Streamlit interface                   |                     7% |
+| Streamlit interface and PDF output    |                     7% |
 | Prompt experimentation                |                     5% |
 | Testing, debugging, and documentation |                     5% |
 
-More development effort was allocated to public web research and specialized agents because the quality of the retrieved evidence directly affects the quality of the final Sales Intelligence Brief.
+More development effort was allocated to public web research and specialized agents because source quality directly affects the quality of the final Sales Intelligence Brief.
 
 ---
 
-# 38. Project Structure
+# 37. Project Structure
 
 ```text
 CAP931_SALES_AGENT/
@@ -1400,65 +1231,63 @@ CAP931_SALES_AGENT/
 
 ---
 
-# 39. Main Project Files
+# 38. Main Project Files
 
-## `app.py`
+### `app.py`
 
-Provides the final Streamlit user interface.
+Provides the Streamlit interface, final brief display, specialized-agent results, research-source display, and one-page PDF download.
 
-## `config.py`
+### `config.py`
 
 Loads environment variables and central application configuration.
 
-## `schemas.py`
+### `schemas.py`
 
 Defines Pydantic input and output schemas.
 
-## `web_research.py`
+### `web_research.py`
 
-Performs advanced public web retrieval, source classification, text extraction, blocked-page detection, and research-context generation.
+Performs public web retrieval, source classification, visible-text extraction, blocked-page detection, and research-context generation.
 
-## `company_agent.py`
+### `company_agent.py`
 
 Analyzes company strategy, priorities, technology signals, potential buying signals, sources, and information gaps.
 
-## `competitor_agent.py`
+### `competitor_agent.py`
 
-Analyzes direct mentions, competitive overlap, possible relationships, differentiation opportunities, sources, and information gaps.
+Analyzes competitive overlap, possible relationships, differentiation opportunities, sources, and information gaps.
 
-## `leadership_agent.py`
+### `leadership_agent.py`
 
-Identifies verified prospect-company leadership when supported by evidence.
+Identifies prospect-company leadership when supported by evidence.
 
-## `pdf_parser.py`
+### `pdf_parser.py`
 
 Extracts text from optional product-overview PDFs.
 
-## `orchestrator.py`
+### `orchestrator.py`
 
 Coordinates the complete multi-agent workflow.
 
-## `report_agent.py`
+### `report_agent.py`
 
 Creates the final Sales Account Intelligence Brief.
 
-## `prompt_experiments.py`
+### `prompt_experiments.py`
 
 Compares baseline single-prompt performance with structured multi-agent prompting.
 
 ---
 
-# 40. Installation
-
-Clone or open the project repository.
+# 39. Installation
 
 Move to the project root:
 
 ```powershell
-cd CAP931_SALES_AGENT
+cd C:\Users\arban\CAP931_SALES_AGENT
 ```
 
-Synchronize the UV environment:
+Synchronize the environment:
 
 ```powershell
 uv sync
@@ -1470,7 +1299,7 @@ Verify Python:
 uv run python --version
 ```
 
-Expected project environment:
+Expected environment:
 
 ```text
 Python 3.12.x
@@ -1478,12 +1307,12 @@ Python 3.12.x
 
 ---
 
-# 41. Verify Dependencies
+# 40. Verify Dependencies
 
 Run:
 
 ```powershell
-uv run python -c "import streamlit, openai, pydantic, requests, bs4, pypdf; print('CAP 931 DEPENDENCIES OK')"
+uv run python -c "import streamlit, openai, pydantic, requests, bs4, pypdf, reportlab; print('CAP 931 DEPENDENCIES OK')"
 ```
 
 Expected result:
@@ -1494,7 +1323,7 @@ CAP 931 DEPENDENCIES OK
 
 ---
 
-# 42. OpenAI API Configuration
+# 41. OpenAI API Configuration
 
 Create a `.env` file in the project root.
 
@@ -1518,9 +1347,9 @@ __pycache__/
 
 ---
 
-# 43. Run the Application
+# 42. Run the Application
 
-The recommended command is:
+Use:
 
 ```powershell
 uv run python -m streamlit run app.py
@@ -1532,7 +1361,7 @@ Streamlit should display:
 You can now view your Streamlit app in your browser.
 ```
 
-The default local URL is:
+Default local address:
 
 ```text
 http://localhost:8501
@@ -1540,7 +1369,7 @@ http://localhost:8501
 
 ---
 
-# 44. Run Prompt Experiment
+# 43. Run Prompt Experiment
 
 Run:
 
@@ -1564,9 +1393,9 @@ Improvement: +57.14 points
 
 ---
 
-# 45. Latest End-to-End Test Status
+# 44. Latest End-to-End Test Status
 
-The final Microsoft scenario completed successfully.
+The Microsoft scenario completed successfully.
 
 ```text
 SOURCES: 11
@@ -1574,7 +1403,7 @@ WARNINGS: 1
 FINAL MULTI-AGENT V2 COMPLETE
 ```
 
-The workflow produced:
+The workflow generated:
 
 - company-strategy analysis;
 - business priorities;
@@ -1586,11 +1415,12 @@ The workflow produced:
 - recommended sales approach;
 - risks and information gaps;
 - public source links;
-- final Sales Account Intelligence Brief.
+- final Sales Account Intelligence Brief;
+- one-page PDF output.
 
 ---
 
-# 46. Optional Enhancements
+# 45. Optional Enhancements
 
 Optional enhancements are documented in:
 
@@ -1610,9 +1440,9 @@ They include:
 
 ---
 
-# 47. Production Deployment Documentation
+# 46. Production Deployment Documentation
 
-Production deployment planning is documented in:
+Production planning is documented in:
 
 ```text
 docs/production_deployment.md
@@ -1632,7 +1462,7 @@ The plan addresses:
 
 ---
 
-# 48. Ethical Considerations
+# 47. Ethical Considerations
 
 AI-generated sales intelligence can influence business decisions.
 
@@ -1640,7 +1470,7 @@ The project therefore follows several principles.
 
 ## Evidence Grounding
 
-Important claims should be based on retrieved public evidence.
+Important claims should be supported by retrieved public evidence.
 
 ## Transparency
 
@@ -1652,15 +1482,7 @@ Missing evidence is explicitly identified.
 
 ## Hallucination Reduction
 
-Agents are instructed not to fabricate:
-
-- leaders;
-- quotes;
-- relationships;
-- contracts;
-- budgets;
-- buying signals;
-- strategic initiatives.
+Agents are instructed not to fabricate leaders, quotes, relationships, contracts, budgets, buying signals, or strategic initiatives.
 
 ## Human Oversight
 
@@ -1672,11 +1494,11 @@ Confidential uploaded documents would require additional access controls and ret
 
 ---
 
-# 49. Current Limitations
+# 48. Current Limitations
 
 The prototype has several limitations:
 
-- some public websites block automated retrieval;
+- some websites block automated retrieval;
 - internal-link discovery may not locate every relevant source;
 - leadership information may not be publicly available;
 - annual reports and SEC filings are not guaranteed to be discovered automatically;
@@ -1691,11 +1513,11 @@ The prototype has several limitations:
 
 ---
 
-# 50. Future Improvements
+# 49. Future Improvements
 
 Potential improvements include:
 
-- broader search-engine integration;
+- broader search integration;
 - SEC / 10-K retrieval;
 - annual-report parsing;
 - stronger press-release discovery;
@@ -1709,46 +1531,116 @@ Potential improvements include:
 - source ranking by authority;
 - source ranking by recency;
 - automated claim verification;
-- automated regression tests;
+- regression tests;
 - presentation generation;
 - production authentication;
 - enterprise monitoring.
 
 ---
 
-# 51. CAP 931 Requirement Coverage
+# 50. CAP 931 Requirement Coverage
 
-| CAP 931 Requirement            | Implementation                     | Status   |
-| ------------------------------ | ---------------------------------- | -------- |
-| Functional Sales Assistant     | Complete multi-agent workflow      | Complete |
-| GPT Model                      | OpenAI GPT-4.1-mini                | Complete |
-| Python                         | Python 3.12                        | Complete |
-| Streamlit                      | Final `app.py` interface           | Complete |
-| Product Name                   | Streamlit input                    | Complete |
-| Company URL                    | Streamlit input                    | Complete |
-| Product Category               | Streamlit input                    | Complete |
-| Competitor URLs                | Streamlit input                    | Complete |
-| Value Proposition              | Streamlit input                    | Complete |
-| Target Customer                | Streamlit input                    | Complete |
-| Optional Product Document      | PDF parser / upload                | Complete |
-| Public URL Processing          | Advanced Web Research              | Complete |
-| Company Strategy               | Company Strategy Agent V2          | Complete |
-| Competitor Mentions / Analysis | Competitor Agent V2                | Complete |
-| Leadership Information         | Leadership Agent V2                | Complete |
-| Product / Strategy Summary     | Company + Final Report Agents      | Complete |
-| Article / Source Links         | Final Sales Brief                  | Complete |
-| One-Page Output                | Sales Account Intelligence Brief   | Complete |
-| Prompt Engineering             | Structured agent prompts           | Complete |
-| Prompt Chaining                | Orchestrator workflow              | Complete |
-| Prompt Experimentation         | Baseline vs. structured experiment | Complete |
-| Output Enhancement             | +57.14 heuristic points            | Complete |
-| Alert System                   | Design documented                  | Complete |
-| Production Deployment          | Plan documented                    | Complete |
-| Technical Documentation        | README + code documentation        | Complete |
-| Time Management                | Documented                         | Complete |
-| Challenges and Solutions       | Documented                         | Complete |
-| Experiments and Outcomes       | Documented                         | Complete |
-| Human Oversight                | Included throughout workflow       | Complete |
+| CAP 931 Requirement        | Implementation                     | Status   |
+| -------------------------- | ---------------------------------- | -------- |
+| Functional Sales Assistant | Complete multi-agent workflow      | Complete |
+| GPT Model                  | OpenAI GPT-4.1-mini                | Complete |
+| Python                     | Python 3.12                        | Complete |
+| Streamlit                  | Final `app.py` interface           | Complete |
+| Product Name               | Streamlit input                    | Complete |
+| Company URL                | Streamlit input                    | Complete |
+| Product Category           | Streamlit input                    | Complete |
+| Competitor URLs            | Streamlit input                    | Complete |
+| Value Proposition          | Streamlit input                    | Complete |
+| Target Customer            | Streamlit input                    | Complete |
+| Optional Product Document  | PDF parser / upload                | Complete |
+| Public URL Processing      | Public Web Research                | Complete |
+| Company Strategy           | Company Strategy Agent V2          | Complete |
+| Competitor Analysis        | Competitor Agent V2                | Complete |
+| Leadership Information     | Leadership Agent V2                | Complete |
+| Product / Strategy Summary | Company + Final Report Agents      | Complete |
+| Article / Source Links     | Final Sales Brief                  | Complete |
+| One-Page Output            | One-Page PDF Sales Brief           | Complete |
+| PDF Download               | Streamlit PDF generator            | Complete |
+| Prompt Engineering         | Structured agent prompts           | Complete |
+| Prompt Chaining            | Orchestrator workflow              | Complete |
+| Prompt Experimentation     | Baseline vs. structured experiment | Complete |
+| Output Enhancement         | +57.14 heuristic points            | Complete |
+| Alert System               | Design documented                  | Complete |
+| Production Deployment      | Plan documented                    | Complete |
+| Technical Documentation    | README + code documentation        | Complete |
+| Time Management            | Documented                         | Complete |
+| Challenges and Solutions   | Documented                         | Complete |
+| Experiments and Outcomes   | Documented                         | Complete |
+| Human Oversight            | Included throughout workflow       | Complete |
+
+---
+
+# 51. Screenshot Evidence
+
+The following screenshots document the completed system.
+
+### Screenshot 1 – CAP 931 Streamlit Sales Opportunity Input Interface
+
+Shows the completed Streamlit input interface with:
+
+- Product Name;
+- Prospect Company URL;
+- Product Category;
+- Target Customer;
+- Value Proposition;
+- Competitor URLs;
+- Optional Product Overview PDF;
+- Generate Sales Intelligence Brief button.
+
+### Screenshot 2 – Completed Sales Research Workflow and Generated Sales Intelligence Brief
+
+Shows successful completion of the research workflow and generation of the final brief.
+
+### Screenshot 3 – Final Sales Intelligence Brief: Account Overview, Company Strategy, and Competitor Insights
+
+Shows the first sections of the generated account-intelligence report.
+
+### Screenshot 4 – Product Fit, Recommended Sales Approach, Risks / Information Gaps, and Source Links
+
+Shows the remaining sections of the final brief and public source links.
+
+### Screenshot 5 – Company Strategy Agent: Business Priorities, Technology Signals, and Buying Signals
+
+Shows the specialized Company Strategy Agent output.
+
+### Screenshot 6 – Competitor Analysis Agent: Competitive Summary, Verified Mentions, Possible Relationships, and Differentiation Opportunities
+
+Shows the specialized Competitor Analysis Agent output.
+
+### Screenshot 7 – Leadership Research Agent: Verified Leadership and Information Gaps
+
+Demonstrates that the agent reports insufficient evidence rather than inventing unsupported leadership information.
+
+### Screenshot 8 – Public Web Research Sources and Source Validation
+
+Shows public source URLs, source classifications, successful retrievals, and blocked-source handling.
+
+### Screenshot 9 – Prompt Engineering Experiment: Baseline vs. Structured Multi-Agent
+
+Shows:
+
+```text
+Baseline Single Prompt
+Overall Score: 42.86/100
+
+Structured Multi-Agent
+Overall Score: 100.00/100
+
+Improvement from structured prompting: +57.14 points
+```
+
+### Final One-Page PDF Evidence
+
+The final Sales Account Intelligence Brief was successfully downloaded from Streamlit as a one-page PDF and verified as:
+
+```text
+1 of 1
+```
 
 ---
 
@@ -1767,6 +1659,7 @@ The application combines:
 - discovery recommendations;
 - information-gap reporting;
 - source links;
+- one-page PDF generation;
 - human-review safeguards.
 
 The final Microsoft test processed:
@@ -1790,7 +1683,7 @@ Structured Multi-Agent: 100.00/100
 Improvement: +57.14 points
 ```
 
-The project therefore demonstrates that structured prompting, specialized agents, source integration, uncertainty handling, evidence-grounding constraints, and prompt chaining can substantially improve the completeness and reliability of generated sales intelligence within this test scenario.
+The project demonstrates that structured prompting, specialized agents, source integration, uncertainty handling, evidence-grounding constraints, and prompt chaining can substantially improve the completeness and reliability of generated sales intelligence within this test scenario.
 
 The `100/100` experiment result is a heuristic project-quality score and must not be interpreted as 100% factual accuracy.
 
@@ -1804,20 +1697,21 @@ CAP 931 resulted in a functional Multi-Agent GPT Sales Assistant built with:
 - UV;
 - Visual Studio Code;
 - Streamlit;
-- OpenAI GPT;
+- OpenAI GPT-4.1-mini;
 - Pydantic;
 - public web research;
-- PDF processing;
+- PDF input processing;
+- one-page PDF output generation;
 - structured agent workflows;
 - prompt chaining.
 
-The project demonstrates the complete workflow from sales-representative input to public research, specialized analysis, source-grounded synthesis, and generation of a final Sales Account Intelligence Brief.
+The project demonstrates the complete workflow from sales-representative input to public research, specialized analysis, evidence-grounded synthesis, and generation of a final Sales Account Intelligence Brief.
 
 The strongest improvement came from replacing a broad single-prompt approach with a structured multi-agent architecture.
 
-The final prototype demonstrates useful account research while also explicitly reporting uncertainty, inaccessible sources, and missing evidence.
+The final prototype explicitly reports uncertainty, inaccessible sources, and missing evidence instead of treating assumptions as verified facts.
 
-For production use, additional source validation, security, authentication, monitoring, persistent storage, testing, and human oversight would be required.
+For production use, additional source validation, authentication, security, monitoring, persistent storage, testing, and human oversight would be required.
 
 ---
 
@@ -1825,7 +1719,6 @@ For production use, additional source validation, security, authentication, moni
 
 This project was created as an educational prototype for:
 
-**Per Scholas – AI Prompt Engineering**  
 **CAP 931: Capstone – Build a Sales Agent Prototype Using Multi-Agent GPT Models**
 
 AI-generated sales intelligence should be reviewed and validated by a human before being used in business decisions.
